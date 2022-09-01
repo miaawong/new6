@@ -1,0 +1,136 @@
+apiVersion: v1
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>Demo Application</title>
+        <link href="styles.css" rel="stylesheet" type="text/css">
+      </head>
+      <body>
+        Hello from KOTS.
+        <p>This is text from a user config value: 'mia@replicated.com' </p>
+        </br>
+        This is a hidden value:
+        </br>
+        <ul>
+          <li>Hidden Text: 'g6SonOPPqzrK2oVcgb56rTvY9kDnSCyKZC0HX3wj'</li>
+          <li>Hidden Text 2: 'rg2mdOGVpV42A_DptvtSqMjNnJSnH9AchTfoJKNy'</li>
+        </ul>
+      </body>
+    </html>
+  styles.css: |
+    body {
+      background-color: rgb(224,224,224);
+      font-family: Verdana, Arial, Helvetica, sans-serif;
+      font-size: 100%;
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+  labels:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+    kots.io/backup: velero
+  name: nginx-content
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJwcm94eS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWtVNU56bElXRU0wU1VKWGVrODJNVE5VTVhwNVEyRkRkekJLT2pKRk9UYzVTRmhETkVsQ1YzcFBOakV6VkRGNmVVTmhRM2N3U2c9PSJ9LCJyZWdpc3RyeS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWtVNU56bElXRU0wU1VKWGVrODJNVE5VTVhwNVEyRkRkekJLT2pKRk9UYzVTRmhETkVsQ1YzcFBOakV6VkRGNmVVTmhRM2N3U2c9PSJ9fX0=
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-9999"
+    kots.io/app-slug: mia-s-app-chipmunk-1
+  creationTimestamp: null
+  labels:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+    kots.io/backup: velero
+  name: kotsadm-replicated-registry
+  namespace: miaawong
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJwcm94eS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWtVNU56bElXRU0wU1VKWGVrODJNVE5VTVhwNVEyRkRkekJLT2pKRk9UYzVTRmhETkVsQ1YzcFBOakV6VkRGNmVVTmhRM2N3U2c9PSJ9LCJyZWdpc3RyeS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWtVNU56bElXRU0wU1VKWGVrODJNVE5VTVhwNVEyRkRkekJLT2pKRk9UYzVTRmhETkVsQ1YzcFBOakV6VkRGNmVVTmhRM2N3U2c9PSJ9fX0=
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-9999"
+    kots.io/app-slug: mia-s-app-chipmunk-1
+  creationTimestamp: null
+  labels:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+    kots.io/backup: velero
+  name: mia-s-app-chipmunk-1-registry
+  namespace: miaawong
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+  labels:
+    app: example
+    component: nginx
+    kots.io/app-slug: mia-s-app-chipmunk-1
+    kots.io/backup: velero
+  name: example-nginx
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: example
+    component: nginx
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kots.io/app-slug: mia-s-app-chipmunk-1
+  labels:
+    app: example
+    component: nginx
+    kots.io/app-slug: mia-s-app-chipmunk-1
+    kots.io/backup: velero
+  name: example-nginx
+spec:
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      annotations:
+        backup.velero.io/backup-volumes: nginx-content
+        kots.io/app-slug: mia-s-app-chipmunk-1
+      labels:
+        app: example
+        component: nginx
+        kots.io/app-slug: mia-s-app-chipmunk-1
+        kots.io/backup: velero
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html/
+          name: nginx-content
+      imagePullSecrets:
+      - name: mia-s-app-chipmunk-1-registry
+      volumes:
+      - configMap:
+          name: nginx-content
+        name: nginx-content
